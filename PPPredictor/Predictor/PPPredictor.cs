@@ -32,6 +32,7 @@ namespace PPPredictor.Utilities
         private bool _isBeatMapInfoLoaded = false;
         private DateTime _beatMapInfoLoadingStarted = DateTime.MinValue;
         private int _beatMapInfoRequestVersion = 0;
+        private bool _scoreDataRefreshRunning = false;
         private DisplayPPInfo _ppDisplay = new DisplayPPInfo();
         private PPGainResult _ppGainResult = new PPGainResult();
         private Timer _rankTimer;
@@ -170,6 +171,7 @@ namespace PPPredictor.Utilities
             _beatMapInfoLoadingStarted = DateTime.Now;
             _currentBeatMapInfo = new PPPBeatMapInfo(selectedBeatmapLevel != null ? Collections.GetCustomLevelHash(selectedBeatmapLevel.levelID) : null, Converter.Converter.ConvertBeatmapKey(beatmapKey));
             SendDisplayImproveInfo("loading...", true);
+            await AutoSelectMapPoolForBeatMapInfo();
             await UpdateCurrentBeatMapInfos();
             CalculatePP();
             if (!IsRanked())
@@ -190,6 +192,34 @@ namespace PPPredictor.Utilities
             _currentBeatMapInfo = GetModifiedBeatMapInfo(_gameplayModifiers);
             _currentBeatMapInfo.MaxPP = -1;
             _isBeatMapInfoLoaded = true;
+        }
+
+        private async Task AutoSelectMapPoolForBeatMapInfo()
+        {
+            if (leaderboardName != Leaderboard.AccSaber || currentMapPool == null)
+            {
+                return;
+            }
+
+            PPPMapPoolShort mapPool = calculatorInstance.FindMapPoolForBeatMapInfo(leaderboardName, _currentBeatMapInfo);
+            if (mapPool == null || mapPool.Id == currentMapPool.Id)
+            {
+                return;
+            }
+
+            currentMapPool = mapPool;
+            currentMapPool.SelectedByLoading = true;
+            OnMapPoolRefreshed?.Invoke(this, null);
+            IsDataLoading(true);
+            try
+            {
+                await calculatorInstance.UpdateMapPoolDetails(leaderboardName, currentMapPool.Id);
+                await calculatorInstance.GetPlayerScores(leaderboardName, currentMapPool.Id, 10, _leaderboardInfo.LargePageSize, false, SendImproveDataLoadingProgress);
+            }
+            finally
+            {
+                IsDataLoading(false);
+            }
         }
         #endregion
 
@@ -333,6 +363,10 @@ namespace PPPredictor.Utilities
             {
                 return "unavailable";
             }
+            if (!calculatorInstance.HasScoreDataForPPGain(leaderboardName, currentMapPool.Id))
+            {
+                return "loading...";
+            }
 
             double? rawPP = FindRawPPForWeightedGain(ImproveDataTargetWeightedPP, maxPP);
             if (!rawPP.HasValue)
@@ -347,7 +381,7 @@ namespace PPPredictor.Utilities
 
         private bool HasImproveData()
         {
-            return leaderboardName == Leaderboard.BeatLeader || leaderboardName == Leaderboard.ScoreSaber;
+            return leaderboardName == Leaderboard.BeatLeader || leaderboardName == Leaderboard.ScoreSaber || leaderboardName == Leaderboard.AccSaber;
         }
 
         private bool IsImproveDataLoadingDisplay(string improveData)
@@ -520,17 +554,38 @@ namespace PPPredictor.Utilities
                 RefreshCurrentData(1, false, true);
         }
 
-        public async void RefreshCurrentData(int fetchLength, bool refreshStars = false, bool fetchOnePage = false)
+        public void RefreshCurrentData(int fetchLength, bool refreshStars = false, bool fetchOnePage = false)
         {
-            await UpdateCurrentAndCheckResetSession(false);
-            IsDataLoading(true);
-            await calculatorInstance.GetPlayerScores(leaderboardName, currentMapPool.Id, fetchLength, _leaderboardInfo.LargePageSize, fetchOnePage, SendImproveDataLoadingProgress);
-            if (refreshStars) //MapPool change to a pool that has never been selected before;
+            RefreshCurrentData(fetchLength, refreshStars, fetchOnePage, true);
+        }
+
+        private async void RefreshCurrentData(int fetchLength, bool refreshStars, bool fetchOnePage, bool refreshProfile)
+        {
+            if (_scoreDataRefreshRunning)
             {
-                await UpdateCurrentBeatMapInfos();
+                return;
             }
-            CalculatePP();
-            IsDataLoading(false);
+
+            _scoreDataRefreshRunning = true;
+            try
+            {
+                if (refreshProfile)
+                {
+                    await UpdateCurrentAndCheckResetSession(false);
+                }
+                IsDataLoading(true);
+                await calculatorInstance.GetPlayerScores(leaderboardName, currentMapPool.Id, fetchLength, _leaderboardInfo.LargePageSize, fetchOnePage, SendImproveDataLoadingProgress);
+                if (refreshStars) //MapPool change to a pool that has never been selected before;
+                {
+                    await UpdateCurrentBeatMapInfos();
+                }
+                CalculatePP();
+            }
+            finally
+            {
+                IsDataLoading(false);
+                _scoreDataRefreshRunning = false;
+            }
         }
 
         public async Task UpdateCurrentAndCheckResetSession(bool doResetSession)
@@ -557,7 +612,22 @@ namespace PPPredictor.Utilities
             {
                 _ = DisplaySession(false);
                 CalculatePP();
+                RefreshScoreDataIfMissing();
             }
+        }
+
+        private void RefreshScoreDataIfMissing()
+        {
+            if (!_isActive || currentMapPool == null || _scoreDataRefreshRunning)
+            {
+                return;
+            }
+            if (calculatorInstance.HasScoreDataForPPGain(leaderboardName, currentMapPool.Id))
+            {
+                return;
+            }
+
+            RefreshCurrentData(_leaderboardInfo.LargePageSize, false, false, false);
         }
 
         private async void UpdateMapPoolDetails()

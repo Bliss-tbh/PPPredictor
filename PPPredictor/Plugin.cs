@@ -111,7 +111,7 @@ namespace PPPredictor
 
         public static void DebugPrint(string text)
         {
-            Plugin.Log?.Error(text);
+            Plugin.Log?.Info(text);
         }
 
         public static void DebugNetworkPrint(string text, Leaderboard leaderBoard)
@@ -138,7 +138,7 @@ namespace PPPredictor
                 default:
                     return;
             }
-            Plugin.Log?.Error(text);
+            Plugin.Log?.Info(text);
         }
 
         internal static async Task<UserInfo> GetUserInfoBS()

@@ -18,5 +18,12 @@
       </vertical>
       <text text='~beatLeaderImproveData' italics='true' align='Left' font-size='3.5' />
     </horizontal>
+    <horizontal preferred-width='50' align='Left' child-align='MiddleLeft' spacing='1'>
+      <image src='~accSaberImproveDataIcon' preserve-aspect='true' preferred-width='4' min-width='4' preferred-height='3' min-height='3'></image>
+      <vertical preferred-width='3' min-width='3' preferred-height='3' min-height='3' child-align='MiddleCenter'>
+        <loading-indicator active='~isAccSaberImproveDataLoading' ignore-layout='true' preserve-aspect='true' preferred-width='3' min-width='3' preferred-height='3' min-height='3'></loading-indicator>
+      </vertical>
+      <text text='~accSaberImproveData' italics='true' align='Left' font-size='3.5' />
+    </horizontal>
   </vertical>
 </vertical>

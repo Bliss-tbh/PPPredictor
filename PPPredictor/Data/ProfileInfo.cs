@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using IPA.Utilities;
 using PPPredictor.Core;
 using PPPredictor.Core.DataType.LeaderBoard;
 using PPPredictor.Core.DataType.MapPool;
@@ -6,6 +7,7 @@ using PPPredictor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using static PPPredictor.Core.DataType.Enums;
@@ -171,7 +173,8 @@ namespace PPPredictor.Data
                     "",
                     RefetchMapInfoAfterDays,
                     LastSessionReset,
-                    ResetSessionHours
+                    ResetSessionHours,
+                    Path.Combine(UnityGame.UserDataPath, "Accsaber", "MapCache.json")
                 );
         }
     }

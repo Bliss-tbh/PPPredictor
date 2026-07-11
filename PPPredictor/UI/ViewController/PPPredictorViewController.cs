@@ -40,6 +40,7 @@ namespace PPPredictor.UI.ViewController
         private bool _isParsingImproveDataView = false;
         private string _scoreSaberImproveData = string.Empty;
         private string _beatLeaderImproveData = string.Empty;
+        private string _accSaberImproveData = string.Empty;
         private readonly HashSet<string> _loadingImproveDataLeaderboards = new HashSet<string>();
         private List<Action> _lsPropertyChangedActions = new List<Action>();
 
@@ -67,7 +68,7 @@ namespace PPPredictor.UI.ViewController
             floatingScreen.HighlightHandle = false;
             SetupHandleTexture(floatingScreen);
 
-            improveDataFloatingScreen = FloatingScreen.CreateFloatingScreen(new Vector2(55, 24), true, Plugin.ProfileInfo.ImproveDataPosition, new Quaternion(0, 0, 0, 0));
+            improveDataFloatingScreen = FloatingScreen.CreateFloatingScreen(new Vector2(55, 30), true, Plugin.ProfileInfo.ImproveDataPosition, new Quaternion(0, 0, 0, 0));
             improveDataFloatingScreen.gameObject.name = "BSMLFloatingScreen_PPPredictorImproveData";
             improveDataFloatingScreen.gameObject.SetActive(false);
             improveDataFloatingScreen.transform.eulerAngles = Plugin.ProfileInfo.ImproveDataEulerAngles;
@@ -135,6 +136,10 @@ namespace PPPredictor.UI.ViewController
             else if (displayImproveInfo.LeaderboardName == Leaderboard.BeatLeader.ToString())
             {
                 _beatLeaderImproveData = displayImproveInfo.Text;
+            }
+            else if (displayImproveInfo.LeaderboardName == Leaderboard.AccSaber.ToString())
+            {
+                _accSaberImproveData = displayImproveInfo.Text;
             }
 
             if (displayImproveInfo.IsLoading)
@@ -629,6 +634,12 @@ namespace PPPredictor.UI.ViewController
             get => string.IsNullOrEmpty(_beatLeaderImproveData) ? "-" : _beatLeaderImproveData;
         }
 
+        [UIValue("accSaberImproveData")]
+        private string AccSaberImproveData
+        {
+            get => string.IsNullOrEmpty(_accSaberImproveData) ? "-" : _accSaberImproveData;
+        }
+
         [UIValue("isScoreSaberImproveDataLoading")]
         private bool IsScoreSaberImproveDataLoading
         {
@@ -641,6 +652,12 @@ namespace PPPredictor.UI.ViewController
             get => _loadingImproveDataLeaderboards.Contains(Leaderboard.BeatLeader.ToString());
         }
 
+        [UIValue("isAccSaberImproveDataLoading")]
+        private bool IsAccSaberImproveDataLoading
+        {
+            get => _loadingImproveDataLeaderboards.Contains(Leaderboard.AccSaber.ToString());
+        }
+
         [UIValue("scoreSaberImproveDataIcon")]
         private string ScoreSaberImproveDataIcon
         {
@@ -651,6 +668,12 @@ namespace PPPredictor.UI.ViewController
         private string BeatLeaderImproveDataIcon
         {
             get => "PPPredictor.Resources.LeaderBoardLogos.BeatLeader.png";
+        }
+
+        [UIValue("accSaberImproveDataIcon")]
+        private string AccSaberImproveDataIcon
+        {
+            get => "PPPredictor.Resources.LeaderBoardLogos.AccSaber.png";
         }
 
         private void AttachImproveDataPanelToMain()
@@ -853,10 +876,13 @@ namespace PPPredictor.UI.ViewController
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScoreSaberImproveData)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BeatLeaderImproveData)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AccSaberImproveData)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsScoreSaberImproveDataLoading)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsBeatLeaderImproveDataLoading)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsAccSaberImproveDataLoading)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ScoreSaberImproveDataIcon)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BeatLeaderImproveDataIcon)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AccSaberImproveDataIcon)));
         }
 
         private void UpdateImproveDataPanelMovementDisplay()
