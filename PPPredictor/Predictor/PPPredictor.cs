@@ -201,7 +201,7 @@ namespace PPPredictor.Utilities
                 return;
             }
 
-            PPPMapPoolShort mapPool = calculatorInstance.FindMapPoolForBeatMapInfo(leaderboardName, _currentBeatMapInfo);
+            PPPMapPoolShort mapPool = await calculatorInstance.FindMapPoolForBeatMapInfoAsync(leaderboardName, _currentBeatMapInfo);
             if (mapPool == null || mapPool.Id == currentMapPool.Id)
             {
                 return;
